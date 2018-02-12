@@ -1,0 +1,49 @@
+version: '3.4'
+services:
+
+  leprikon:
+    image: misli/svcboskovice:testing
+    depends_on:
+      - db
+      - memcached
+    environment:
+      DEBUG: TEMPLATE
+      SECRET_KEY: secretkey
+      DATABASE_ENGINE: django.db.backends.mysql
+      DATABASE_HOST: ''
+      DATABASE_NAME: svcboskovice
+      DATABASE_PASSWORD: svcboskovicepassword
+      DATABASE_USER: svcboskovice
+      MEMCACHED_LOCATION: memcached:11211
+    ports:
+      - 127.0.0.1:80:80
+    restart: unless-stopped
+    volumes:
+      - ./.ipython:/root/.ipython:z
+      - ./svcboskovice:/app/svcboskovice:ro
+      - ./data:/app/data:z
+      - ./media:/app/htdocs/media:z
+      - db:/var/run/mysqld:z
+
+  db:
+    image: mariadb
+    environment:
+      MYSQL_DATABASE: svcboskovice
+      MYSQL_PASSWORD: svcboskovicepassword
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_USER: svcboskovice
+    ports:
+      - 127.0.0.1:3306:3306
+    restart: unless-stopped
+    volumes:
+      - db:/var/run/mysqld:z
+      - ./mysql:/var/lib/mysql:z
+
+  memcached:
+    image: memcached
+    ports:
+      - 127.0.0.1:11211:11211
+    restart: unless-stopped
+
+volumes:
+  db:

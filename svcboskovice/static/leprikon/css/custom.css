@@ -1,0 +1,9 @@
+.article-preview a img {
+    float: left;
+    margin-right: 30px;
+    margin-bottom: 15px;
+}
+
+.cmsplugin_filer_folder_list .image img {
+    margin: 15px;
+}

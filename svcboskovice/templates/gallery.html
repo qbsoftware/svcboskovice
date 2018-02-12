@@ -1,0 +1,19 @@
+{% load sekizai_tags staticfiles %}
+
+{% addtoblock 'css' %}
+<link rel="stylesheet" href="{% static 'blueimp/css/blueimp-gallery.min.css' %}"/>
+{% endaddtoblock %}
+
+{% addtoblock 'js' %}
+<!-- The Gallery as lightbox dialog, should be a child element of the document body -->
+<div id="blueimp-gallery" class="blueimp-gallery blueimp-gallery-controls">
+    <div class="slides"></div>
+    <h3 class="title"></h3>
+    <a class="prev">‹</a>
+    <a class="next">›</a>
+    <a class="close">×</a>
+    <a class="play-pause"></a>
+    <ol class="indicator"></ol>
+</div>
+<script src="{% static 'blueimp/js/blueimp-gallery.min.js' %}"></script>
+{% endaddtoblock %}

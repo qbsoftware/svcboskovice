@@ -1,0 +1,10 @@
+{% extends "cms_articles/default.html" %}
+{% load cms_articles %}
+
+{% block content %}
+
+<h1 class="article-title">{% block title %}{% article_attribute "title" %}{% endblock %}</h1>
+
+{% article_placeholder "content" %}
+
+{% endblock %}

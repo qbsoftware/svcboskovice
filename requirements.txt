@@ -1,0 +1,4 @@
+Whoosh
+aldryn-search
+django-cms-articles
+leprikon
