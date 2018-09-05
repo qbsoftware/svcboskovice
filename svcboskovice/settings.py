@@ -11,10 +11,6 @@ INSTALLED_APPS = [
     'aldryn_search',
 ]
 
-MIDDLEWARE_CLASSES = [
-    'django.contrib.redirects.middleware.RedirectFallbackMiddleware',
-] + MIDDLEWARE_CLASSES
-
 # search settings
 HAYSTACK_CONNECTIONS = {
     'default': {
