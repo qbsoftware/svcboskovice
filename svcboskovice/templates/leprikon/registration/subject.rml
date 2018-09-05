@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="utf-8" standalone="no" ?>
+{% load i18n html2rml leprikon_tags %}
+<!DOCTYPE document SYSTEM "rml.dtd">
+<document filename="{{ object.pdf_filename }}">
+
+    <docinit>
+        <registerFont fontName="DejaVuSans" fontFile="{% font 'leprikon/fonts/DejaVuSans.ttf' %}"/>
+        <registerFont fontName="DejaVuSans-Bold" fontFile="{% font 'leprikon/fonts/DejaVuSans-Bold.ttf' %}"/>
+        <registerFont fontName="DejaVuSans-Oblique" fontFile="{% font 'leprikon/fonts/DejaVuSans-Oblique.ttf' %}"/>
+        <registerFont fontName="DejaVuSans-BoldOblique" fontFile="{% font 'leprikon/fonts/DejaVuSans-BoldOblique.ttf' %}"/>
+        <registerFontFamily normal="DejaVuSans" bold="DejaVuSans-Bold" italic="DejaVuSans-Oblique" boldItalic="DejaVuSans-BoldOblique"/>
+    </docinit>
+
+    <template showBoundary="0">
+        <!--define a 'frame' into which the content will flow.-->
+        <pageTemplate id="main">
+             <frame id="first" x1="{{ object.print_setup.x1 }}" y1="{{ object.print_setup.y1 }}" width="{{ object.print_setup.width }}" height="{{ object.print_setup.height }}"/>
+        </pageTemplate>
+    </template>
+
+    <stylesheet>
+        <paraStyle name="title" fontName="DejaVuSans-Bold" fontSize="16" alignment="CENTER"/>
+        <paraStyle name="subtitle" fontName="DejaVuSans-Bold" fontSize="10" alignment="CENTER"/>
+        <paraStyle name="para" fontName="DejaVuSans" fontSize="8"/>
+        <paraStyle name="p" fontName="DejaVuSans" fontSize="8" spaceBefore="0.2 cm"/>
+        <paraStyle name="li" fontName="DejaVuSans" fontSize="8" spaceBefore="0.2 cm"/>
+        <listStyle name="ul" bulletType='bullet' start='•' bulletFontSize='8'/>
+        <listStyle name="ol" bulletFontSize='8'/>
+        <blockTableStyle id="myBlockTableStyle">
+            <!-- Set fonts -->
+            <blockFont name="DejaVuSans" size="8"/>
+            <blockTextColor colorName="black"/>
+            <blockAlignment value="LEFT"/>
+            <blockValign value="TOP"/>
+            <lineStyle kind="GRID" colorName="silver"/>
+        </blockTableStyle>
+    </stylesheet>
+    <story>
+        <para style="title">{% blocktrans with subject_type=object.subject.subject_type.name_akuzativ %}Registration for {{ subject_type }}{% endblocktrans %}</para>
+        <para style="subtitle">{% blocktrans with school_year=object.subject.school_year %}in school year {{ school_year }}{% endblocktrans %}</para>
+
+        <spacer length="2mm"/>
+
+        <blockTable style="myBlockTableStyle">
+            <tr>
+                <td>{% blocktrans with subject_type=object.subject.subject_type.name_genitiv %}Name of {{ subject_type }}{% endblocktrans %}</td>
+                <td><para style="para">{{ object.subject.name }}</para></td>
+            </tr>
+            <tr>
+                <td>{% trans 'Price' %}</td>
+                <td>
+                    <para style="para">
+                        {{ object.price | currency }}
+                        {% if object.subject.course.school_year_division.period_name %} / {{ object.subject.course.school_year_division.period_name }}{% endif %}
+                        {% if object.subject_variant %}({{ object.subject_variant.name }}){% endif %}
+                    </para>
+                </td>
+            </tr>
+            {% if object.subject.event.start_date %}
+            <tr>
+                <td>{% trans 'Dates of event' %}</td>
+                <td><para style="para">{{ object.subject.event.get_times_list }}</para></td>
+            </tr>
+            {% elif object.subject.course.all_times %}
+            <tr>
+                <td>{% trans 'Times' %}</td>
+                <td><para style="para">{{ object.subject.course.get_times_list }}</para></td>
+            </tr>
+            {% endif %}
+            <tr>
+                <td>{% trans 'Registration number (variable symbol)' %}</td>
+                <td><para style="para">{{ object.variable_symbol }}</para></td>
+            </tr>
+        </blockTable>
+
+        <spacer length="5mm"/>
+
+        <para style="title">{% trans 'Participant' %}</para>
+
+        <spacer length="2mm"/>
+
+        <blockTable style="myBlockTableStyle">
+            <tr>
+                <td>{% trans 'Full name' %}</td>
+                <td><para style="para">{{ object.participant.full_name }}</para></td>
+            </tr>
+            <tr>
+                <td>{% trans 'Age group' %}</td>
+                <td><para style="para">{{ object.participant.age_group }}</para></td>
+            </tr>
+            <tr>
+                <td>{% trans 'Birth number' %}</td>
+                <td><para style="para">{{ object.participant.birth_num }}</para></td>
+            </tr>
+            <tr>
+                <td>{% trans 'Address' %}</td>
+                <td><para style="para">{{ object.participant.address }}</para></td>
+            </tr>
+            <tr>
+                <td>{% trans 'Citizenship' %}</td>
+                <td><para style="para">{{ object.participant.citizenship }}</para></td>
+            </tr>
+            <tr>
+                <td>{% trans 'Phone' %}</td>
+                <td><para style="para">{{ object.participant.phone }}</para></td>
+            </tr>
+            <tr>
+                <td>{% trans 'E-mail' %}</td>
+                <td><para style="para">{{ object.participant.email }}</para></td>
+            </tr>
+            <tr>
+                <td>{% trans 'School' %}</td>
+                <td><para style="para">{{ object.participant.school_name }}</para></td>
+            </tr>
+            <tr>
+                <td>{% trans 'Class' %}</td>
+                <td><para style="para">{{ object.participant.school_class }}</para></td>
+            </tr>
+            {% for qa in object.get_questions_and_answers %}
+            <tr>
+                <td>{{ qa.question }}</td>
+                <td><para style="para">{{ qa.answer }}</para></td>
+            </tr>
+            {% endfor %}
+        </blockTable>
+
+        <blockTable style="myBlockTableStyle">
+            <tr>
+                <td>{% trans 'Health' %}</td>
+            </tr>
+            <tr>
+                <td>
+                    {% for line in object.participant.health|lines %}
+                    <para style="para">{{ line }}</para>
+                    {% empty %}
+                    <para style="para"></para>
+                    <spacer length="1cm"/>
+                    {% endfor %}
+                </td>
+            </tr>
+        </blockTable>
+
+        {% if object.parents %}
+
+        <spacer length="5mm"/>
+
+        <para style="title">{% trans 'Parents' %}</para>
+
+        {% endif %}
+
+        {% for parent in object.parents %}
+
+        <spacer length="{% if forloop.first %}2{% else %}8{% endif %}mm"/>
+
+        <blockTable style="myBlockTableStyle">
+            <tr>
+                <td>{% trans 'Full name' %}</td>
+                <td><para style="para">{{ parent.full_name }}</para></td>
+            </tr>
+            <tr>
+                <td>{% trans 'Address' %}</td>
+                <td><para style="para">{{ parent.address }}</para></td>
+            </tr>
+            <tr>
+                <td>{% trans 'Contact' %}</td>
+                <td><para style="para">{{ parent.contact }}</para></td>
+            </tr>
+        </blockTable>
+
+        {% endfor %}
+
+        <spacer length="1cm"/>
+
+        {{ object.agreement|html2rml }}
+
+        <spacer length="1cm"/>
+
+        <blockTable>
+            <tr>
+                <td><para style="para">{% trans 'In' %}</para></td>
+                <td><para style="para">{% trans 'date' %}</para></td>
+                <td><para style="para">{% if object.parents %}{% trans "Parent's signature" %}{% else %}{% trans 'Signature' %}{% endif %}</para></td>
+            </tr>
+        </blockTable>
+
+    </story>
+</document>
