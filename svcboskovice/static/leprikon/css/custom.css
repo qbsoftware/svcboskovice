@@ -1,3 +1,9 @@
+.article-preview:after {
+    clear: both;
+    content: '';
+    display: block;
+}
+
 .article-preview a img {
     float: left;
     margin-right: 30px;
