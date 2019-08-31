@@ -7,7 +7,6 @@ INSTALLED_APPS = [
     'cms_articles',
 ] + INSTALLED_APPS + [
     'django.contrib.redirects',
-    'haystack',
     'aldryn_search',
 ]
 
