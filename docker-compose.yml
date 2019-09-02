@@ -2,48 +2,81 @@ version: '3.4'
 services:
 
   leprikon:
-    image: misli/svcboskovice:testing
+    image: misli/svcboskovice
+    build: .
     depends_on:
-      - db
       - memcached
+      - mysql
+      - smtp
     environment:
-      DEBUG: TEMPLATE
       SECRET_KEY: secretkey
       DATABASE_ENGINE: django.db.backends.mysql
       DATABASE_HOST: ''
       DATABASE_NAME: svcboskovice
       DATABASE_PASSWORD: svcboskovicepassword
       DATABASE_USER: svcboskovice
+      EMAIL_HOST: smtp
+      EMAIL_HOST_PASSWORD: emailpassword
+      EMAIL_HOST_USER: svcboskovice
+      EMAIL_SUBJECT_PREFIX: '[SVČ Boskovice]'
+      MEMCACHED_KEY_PREFIX: svcboskovice
       MEMCACHED_LOCATION: memcached:11211
+      ROCKETCHAT_URL: https://chat.svcboskovice.cz
     ports:
       - 127.0.0.1:80:80
-    restart: unless-stopped
     volumes:
-      - ./.ipython:/root/.ipython:z
-      - ./svcboskovice:/app/svcboskovice:ro
-      - ./data:/app/data:z
-      - ./media:/app/htdocs/media:z
-      - db:/var/run/mysqld:z
-
-  db:
-    image: mariadb
-    environment:
-      MYSQL_DATABASE: svcboskovice
-      MYSQL_PASSWORD: svcboskovicepassword
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_USER: svcboskovice
-    ports:
-      - 127.0.0.1:3306:3306
-    restart: unless-stopped
-    volumes:
-      - db:/var/run/mysqld:z
-      - ./mysql:/var/lib/mysql:z
+      - ./.ipython:/root/.ipython
+      - ./data:/app/data
+      - ./media:/app/htdocs/media
+      - mysql:/var/run/mysqld
 
   memcached:
     image: memcached
+
+  mongo:
+    image: mongo:3-jessie
+    command: mongod --smallfiles --oplogSize 128 --replSet rs0
+    hostname: mongo
+    volumes:
+      - /tmp
+      - ./mongo:/data/db
+
+  mysql:
+    image: mariadb
+    environment:
+      MYSQL_DATABASE: svcboskovice
+      MYSQL_PASSWORD: dbpassword
+      MYSQL_ROOT_PASSWORD: rootdbpassword
+      MYSQL_USER: svcboskovice
+    volumes:
+      - mysql:/var/run/mysqld
+      - ./mysql:/var/lib/mysql
+
+  rocketchat:
+    image: rocketchat/rocket.chat
+    command: bash -c 'for i in `seq 1 30`; do node main.js && s=$$? && break || s=$$?; echo "Tried $$i times. Waiting 5 secs..."; sleep 5; done; (exit $$s)'
+    depends_on:
+      - mongo
+      - smtp
+    environment:
+      MONGO_URL: mongodb://mongo:27017/rocketchat
+      MONGO_OPLOG_URL: mongodb://mongo:27017/local
+      PORT: '3000'
+      ROOT_URL: https://chat.svcboskovice.leprikon.cz
     ports:
-      - 127.0.0.1:11211:11211
-    restart: unless-stopped
+    - 127.0.0.1:10052:3000/tcp
+    volumes:
+    - ./uploads:/app/uploads
+
+  smtp:
+    image: catatnight/postfix
+    environment:
+      maildomain: svcboskovice.cz
+      smtp_user: svcboskovice:emailpassword
+    stdin_open: true
+    volumes:
+    - ./dkim:/etc/opendkim/domainkeys
+    tty: true
 
 volumes:
-  db:
+  mysql:
