@@ -8,24 +8,28 @@ services:
       - memcached
       - mysql
       - smtp
+      - chat
     environment:
-      SECRET_KEY: secretkey
       DATABASE_ENGINE: django.db.backends.mysql
       DATABASE_HOST: ''
       DATABASE_NAME: svcboskovice
-      DATABASE_PASSWORD: svcboskovicepassword
       DATABASE_USER: svcboskovice
+      DATABASE_PASSWORD: svcboskovicepassword
       EMAIL_HOST: smtp
-      EMAIL_HOST_PASSWORD: emailpassword
       EMAIL_HOST_USER: svcboskovice
+      EMAIL_HOST_PASSWORD: emailpassword
       EMAIL_SUBJECT_PREFIX: '[SVČ Boskovice]'
+      LEPRIKON_CHAT_NAME: 'SVČ Boskovice'
+      LEPRIKON_CHAT_USERNAME: svcboskovice
       MEMCACHED_KEY_PREFIX: svcboskovice
       MEMCACHED_LOCATION: memcached:11211
-      ROCKETCHAT_URL: https://chat.svcboskovice.cz
+      MONGO_URL: mongodb://mongo:27017/rocketchat
+      ROCKETCHAT_API_URL: http://chat:3000/_chat
+      SECRET_KEY: secretkey
+      SERVER_EMAIL: '"SVČ Boskovice" <svc@svcboskovice.cz>'
     ports:
       - 127.0.0.1:80:80
     volumes:
-      - ./.ipython:/root/.ipython
       - ./data:/app/data
       - ./media:/app/htdocs/media
       - mysql:/var/run/mysqld
@@ -33,40 +37,61 @@ services:
   memcached:
     image: memcached
 
-  mongo:
-    image: mongo:3-jessie
-    command: mongod --smallfiles --oplogSize 128 --replSet rs0
-    hostname: mongo
-    volumes:
-      - /tmp
-      - ./mongo:/data/db
-
   mysql:
     image: mariadb
     environment:
       MYSQL_DATABASE: svcboskovice
+      MYSQL_USER: svcboskovice
       MYSQL_PASSWORD: dbpassword
       MYSQL_ROOT_PASSWORD: rootdbpassword
-      MYSQL_USER: svcboskovice
     volumes:
       - mysql:/var/run/mysqld
       - ./mysql:/var/lib/mysql
 
-  rocketchat:
-    image: rocketchat/rocket.chat
-    command: bash -c 'for i in `seq 1 30`; do node main.js && s=$$? && break || s=$$?; echo "Tried $$i times. Waiting 5 secs..."; sleep 5; done; (exit $$s)'
+  mongo:
+    image: mongo:4
+    hostname: mongo
+    volumes:
+     - ./mongo:/data/db
+    command: mongod --oplogSize 128 --replSet rs0
+
+  # this container's job is just run the command to initialize the replica set.
+  # it will run the command and remove himself (it will not stay running)
+  mongo-init-replica:
+    image: mongo:4
+    command: >
+      bash -c
+        "for i in `seq 1 30`; do
+          mongo mongo/rocketchat --eval \"
+            rs.initiate({
+              _id: 'rs0',
+              members: [ { _id: 0, host: 'localhost:27017' } ]})\" &&
+          s=$$? && break || s=$$?;
+          echo \"Tried $$i times. Waiting 5 secs...\";
+          sleep 5;
+        done; (exit $$s)"
     depends_on:
       - mongo
-      - smtp
+
+  chat:
+    image: rocketchat/rocket.chat:latest
+    command: >
+      bash -c
+        "for i in `seq 1 30`; do
+          node main.js &&
+          s=$$? && break || s=$$?;
+          echo \"Tried $$i times. Waiting 5 secs...\";
+          sleep 5;
+        done; (exit $$s)"
+    volumes:
+      - ./uploads:/app/uploads
     environment:
+      PORT: 3000
       MONGO_URL: mongodb://mongo:27017/rocketchat
       MONGO_OPLOG_URL: mongodb://mongo:27017/local
-      PORT: '3000'
-      ROOT_URL: https://chat.svcboskovice.leprikon.cz
-    ports:
-    - 127.0.0.1:10052:3000/tcp
-    volumes:
-    - ./uploads:/app/uploads
+      ROOT_URL: https://leprikon.svcboskovice.cz/_chat
+    depends_on:
+      - mongo
 
   smtp:
     image: catatnight/postfix
@@ -74,9 +99,9 @@ services:
       maildomain: svcboskovice.cz
       smtp_user: svcboskovice:emailpassword
     stdin_open: true
-    volumes:
-    - ./dkim:/etc/opendkim/domainkeys
     tty: true
+    volumes:
+      - ./dkim:/etc/opendkim/domainkeys
 
 volumes:
   mysql:

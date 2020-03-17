@@ -4,8 +4,8 @@ from leprikon.site.settings import *
 # Application definition
 INSTALLED_APPS = [
     'svcboskovice',
-    'cms_articles',
 ] + INSTALLED_APPS + [
+    'cms_articles',
     'django.contrib.redirects',
     'aldryn_search',
 ]

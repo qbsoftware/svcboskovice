@@ -2,10 +2,11 @@
 *.pyo
 *.swp
 *~
-/.ipython
 /data
+/dkim
 /docker-compose.*.yml
 /env
-/htdocs
 /media
+/mongo*
 /mysql*
+/uploads
