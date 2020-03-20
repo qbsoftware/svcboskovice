@@ -21,7 +21,6 @@ services:
       EMAIL_SUBJECT_PREFIX: '[SVČ Boskovice]'
       LEPRIKON_CHAT_NAME: 'SVČ Boskovice'
       LEPRIKON_CHAT_USERNAME: svcboskovice
-      MEMCACHED_KEY_PREFIX: svcboskovice
       MEMCACHED_LOCATION: memcached:11211
       MONGO_URL: mongodb://mongo:27017/rocketchat
       ROCKETCHAT_API_URL: http://chat:3000/_chat
