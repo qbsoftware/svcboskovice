@@ -5,8 +5,8 @@
 /data
 /dkim
 /docker-compose.*.yml
-/env
 /media
 /mongo*
 /mysql*
+/redis*
 /uploads
