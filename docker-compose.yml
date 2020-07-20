@@ -102,7 +102,7 @@ services:
   smtp:
     image: catatnight/postfix
     environment:
-      maildomain: svcboskovice.cz
+      maildomain: leprikon.cz
       smtp_user: svcboskovice:emailpassword
     stdin_open: true
     tty: true
